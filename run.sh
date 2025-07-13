@@ -35,4 +35,5 @@ docker container run \
     --volume /app/.venv \
     --publish 8000:8000 \
     -it \
+    --add-host=host.docker.internal:host-gateway \
     $TAG

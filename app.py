@@ -24,7 +24,7 @@ async def root():
             <h1>MiniVault API using '{LLM_MODEL}' LLM local instance</h1>
         </body>
     </html>
-    """    
+    """
 
 @app.post("/generate")
 async def generate_response(prompt: Prompt):
@@ -37,7 +37,7 @@ async def generate_response(prompt: Prompt):
     json_logs = []
 
     json_logs.append(prompt.model_dump())
-    
+
     response = {
         'response': ''
     }
@@ -49,4 +49,4 @@ async def generate_response(prompt: Prompt):
     print('')
     json_logs.append(response)
     log_data(json_logs)
-    return response 
+    return response

@@ -44,7 +44,12 @@ git clone https://github.com/eliud-kyale/minivault-api.git
 ### Run the Ollama server in a Docker Container
 
 ```
-docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+docker run \
+-d -v ollama:/root/.ollama \
+-p 11434:11434 --name ollama \
+--add-host=host.docker.internal:host-gateway  \
+ollama/ollama
+
 curl http://localhost:11434
 ```
 ```
@@ -65,12 +70,15 @@ docker exec ollama ollama list
 ### If the ollama pull fails - download a huggingface equivalent
 
 ```
-docker exec ollama ollama pull docker exec ollama ollama pull hf.co/bartowski/Lexi-Llama-3-8B-Uncensored-GGUF
-docker exec ollama ollama cp Lexi-Llama-3-8B-Uncensored-GGUF llama3
+docker exec ollama ollama pull hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
+docker exec ollama ollama cp hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M llama3
 docker exec ollama ollama list
+docker exec ollama ollama show llama3
 ```
+Send a Curl prompt to verify the model is working
 ```
-
+docker exec ollama ollama run llama3 "Marco?"
+It seems like we just started! How can I assist you today? Do you want to talk about Marco, or is there something else on your mind?
 ```
 ### Run application in Docker Container
 
