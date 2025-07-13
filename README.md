@@ -1,110 +1,139 @@
 # MiniVault API
-This is a lightweight REST API that recieves a prompt and returns an generated response. 
+This is a lightweight REST API that recieves a prompt and returns an generated response.
 
 The response is from a local large language model(LLM) 'llama3'.
 
+## Notes
+
+The application is written Python and makes use of 2 python libraries:
++ [FastAPI](https://fastapi.tiangolo.com/): A web framework that makes writing REST API handlers easy
++ [Ollama Python](https://github.com/ollama/ollama-python): A wrapper library for send REST requests to a local Ollama server
+
+Both the Ollama server and my application are running in Docker containers. This helps simplify the dependancies on the host machine. No complicated python virtual enviroments or installations.
+
+In the future, I’d like to incorporate model management into the API. Currently, the LLM is hardcoded to use 'llama3'.
+
+Additionally, a nice enhancement would be to allow users to load multiple models and generate side-by-side responses from the different LLMs.
+
 ## Prerequisites
 
-+ [Install *Docker*](https://docs.docker.com/get-started/get-docker/): Container Runtime 
++ [Install *Docker*](https://docs.docker.com/get-started/get-docker/):
+  Container Runtime
   ```
-  ❯ docker -v
+  docker -v
+  ```
+  ```
   Docker version 28.3.0, build 38b7060
   ```
 
-+ [Install *Python*](https://www.python.org/downloads/): Ensure you have Python 3.12 or later installed on your system.
++ [Install Postman CLI](https://learning.postman.com/docs/postman-cli/postman-cli-installation/): (***Optional***)
+  For running postman collections to test REST API
   ```
-  ❯ python --version
-  Python 3.12.11
+  postman --version
   ```
-
-+ [Install *Ollama*](https://github.com/ollama/ollama/blob/main/docs/README.md): Locally deployed AI model runner
-
-+ In a separate terminal window. Start Ollama. *Ctrl+C* to stop 
   ```
-  ❯ ollama serve 
-  ```
-
-+ Verify Ollama is running. Either issuing a curl command or by web browser. [link](http://localhost:11434) 
-  ```
-  ❯ curl http://localhost:11434
-  Ollama is running
-  ```
-+ Pull the ***llama3*** model 
-  ```
-  ❯ ollama pull llama3
-  ❯ ollama list
-  NAME             ID              SIZE      MODIFIED
-  llama3:latest    365c0bd3c000    4.7 GB    ...
-  ```
-
-+ [Install uv](https://github.com/astral-sh/uv): Python Package and Project Manager 
-
-+ [Install Postman CLI](https://learning.postman.com/docs/postman-cli/postman-cli-installation/): For running postman collections to test REST API
-  ```
-  ❯ postman --version
   1.17.0
   ```
 ## Usage
 
 ### Clone the GitHub Repository
 
-  ```
-  ❯ git clone https://github.com/eliud-kyale/minivault-api.git
-  ```
+```
+git clone https://github.com/eliud-kyale/minivault-api.git
+```
+### Run the Ollama server in a Docker Container
 
-<table>
-<tr>
-<td> <h3>Docker Container</h3> </td> <td>  <h3>Python Virtual Environment</h3> </td>
-</tr>
-<tr>
-<td style="vertical-align: top;>
-Running app in docker container ***Simplest Way***
+```
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+curl http://localhost:11434
+```
+```
+Ollama is running
+```
 
-+ A run.sh utility is provided for quickly 
-building the image and starting the container.
-  ```
-  ❯ ./run.sh
-  ```
+### Pull the ***llama3*** model
 
-</td>
-<td>
-Running app manually in python virtual environment
+```
+docker exec ollama ollama pull llama3
+docker exec ollama ollama list
+```
+```
+  NAME             ID              SIZE      MODIFIED
+  llama3:latest    365c0bd3c000    4.7 GB    3 minutes ago
+```
 
-+ Setup Virtual Environment
-  ```
-  ❯ cd minivault-api
-  ❯ uv .venv --python 3.12
-  ❯ source .venv/bin/activate
-  ```
+### If the ollama pull fails - download a huggingface equivalent
 
-+ Install python package dependancies in virtual environment
-  ```
-  ❯ uv sync
-  ```
+```
+docker exec ollama ollama pull docker exec ollama ollama pull hf.co/bartowski/Lexi-Llama-3-8B-Uncensored-GGUF
+docker exec ollama ollama cp Lexi-Llama-3-8B-Uncensored-GGUF llama3
+docker exec ollama ollama list
+```
+```
 
-+ Start the application
-  ```
-  ❯ uv run fastapi dev app.py
-  ```
+```
+### Run application in Docker Container
 
-</td>
-</tr>
-</table>
+A [run.sh](https://github.com/eliud-kyale/minivault-api/blob/master/run.sh) utility will
+build and run the application in a docker container.
+```
+./run.sh
+```
+
+### Verify both containers are running
+```
+docker ps
+```
+```
+CONTAINER ID   IMAGE                      COMMAND                  CREATED          STATUS          PORTS                                             NAMES
+3249e4f64d1f   eliudkyale/minivault-api   "fastapi dev --host …"   58 seconds ago   Up 56 seconds   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp       gallant_rubin
+1c81d9b09950   ollama/ollama              "/bin/ollama serve"      22 minutes ago   Up 22 minutes   0.0.0.0:11434->11434/tcp, [::]:11434->11434/tcp   ollama
+```
+
+### Test REST api using Curl
+
+GET '/' Request (Welcome Page)
+```
+curl http://localhost:8000
+```
+```
+    <html>
+        <head>
+            <title>Written by Eliud Kyale</title>
+        </head>
+        <body>
+            <h1>MiniVault API using 'llama3' LLM local instance</h1>
+        </body>
+    </html>
+    %
+```
+
+POST '/generate' Request
+```
+curl -X POST http://localhost:8000/generate \
+     -H "Content-Type: application/json" \
+     -d '{"prompt":"Marco ?"}'
+```
+```
+{"response":"Polo!"}%
+```
 
 ### Run Postman CLI to test REST API (Optional)
 
+A sample [postman collection](https://github.com/eliud-kyale/minivault-api/blob/master/minivault_generate.postman_collection.json) is provided to test the REST API
 In a separate terminal
 ```
-❯ cd minivault-api
-❯ postman collection run ./minivault_generate.postman_collection.json
+cd minivault-api
+postman collection run ./minivault_generate.postman_collection.json
 ```
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE]() file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/eliud-kyale/minivault-api/blob/master/LICENSE) file for details.
 
-## System Considerations 
+## System Considerations
 
-LLMs in general require sizable GPU and RAM to run 
+LLMs in general require sizable GPU and RAM to run. Some prompts could take upto 2 mins to run
 
 For context, I ran this project on:
 
