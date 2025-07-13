@@ -1,0 +1,10 @@
+[project]
+name = "minivault-api"
+version = "0.1.0"
+description = "MiniVault API"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.116.1",
+    "ollama>=0.5.1",
+]
